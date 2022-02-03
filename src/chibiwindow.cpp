@@ -19,8 +19,13 @@
 
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QSystemTrayIcon>
+#include <QCloseEvent>
+#include <QMenu>
+#include <QAction>
+#include <QObject>
 
-#include "carla/CarlaUtils.hpp"
+#include "src/carla/CarlaUtils.hpp"
 
 ChibiWindow::ChibiWindow(BinaryType btype,
                          PluginType ptype,
@@ -35,8 +40,27 @@ ChibiWindow::ChibiWindow(BinaryType btype,
 {
     ui->setupUi(this);
 
-    const QString properName = QString("Chibi%1%2").arg(name[0].isDigit() ? "-" : "").arg(name);
-    setWindowTitle(properName);
+    const QString properName = QString("Sunako");
+    this->setWindowTitle(properName);
+
+    // Tray behaviour
+    trayIcon = new QSystemTrayIcon(this->windowIcon(),this);
+    trayMenu = new QMenu(this);
+    tray_Action_Quit = new QAction(QString("Quit"), this);
+    tray_Action_Restore = new QAction(QString("Show"), this);
+    tray_Action_Mute = new QAction(QString("Mute"), this);
+    tray_Action_Bypass = new QAction(QString("Bypass"), this);
+    trayIcon -> setVisible(true);
+    trayMenu -> addAction(tray_Action_Bypass);
+    trayMenu -> addAction(tray_Action_Mute);
+    trayMenu -> addAction(tray_Action_Restore);
+    trayMenu -> addAction(tray_Action_Quit);
+    trayIcon -> setContextMenu(trayMenu);
+    connect(tray_Action_Quit, SIGNAL(triggered()), this, SLOT(close()));
+    connect(tray_Action_Restore, SIGNAL(triggered()), this, SLOT(restore()));
+    connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(restore()));
+    connect(tray_Action_Mute, SIGNAL(triggered()), this, SLOT(actionMute()));
+    connect(tray_Action_Bypass, SIGNAL(triggered()), this, SLOT(actionBypass()));
 
     carla_set_engine_option(handle, CarlaBackend::ENGINE_OPTION_OSC_ENABLED, 0, nullptr);
 
@@ -77,6 +101,7 @@ ChibiWindow::ChibiWindow(BinaryType btype,
         return;
     }
 
+
     void* const ptr = carla_embed_custom_ui(handle, 0, (void*)(intptr_t)ui->embedwidget->winId());
     ui->embedwidget->setup(ptr);
 
@@ -96,10 +121,19 @@ ChibiWindow::~ChibiWindow()
 
 void ChibiWindow::closeEvent(QCloseEvent* const event)
 {
+    if (trayIcon->isVisible() && this->isVisible()) {
+        hide();
+        event->ignore();
+        return;
+    }
+
+
     killTimer(idleTimer);
 
     if (carla_is_engine_running(handle))
         carla_set_engine_about_to_close(handle);
+
+    this->trayIcon->setVisible(false);
 
     QMainWindow::closeEvent(event);
 }
@@ -128,13 +162,9 @@ void ChibiWindow::engineCallback(const EngineCallbackOpcode action, const uint p
         break;
     case CarlaBackend::ENGINE_CALLBACK_EMBED_UI_RESIZED:
         carla_stdout("resized to %i %i", value1, value2);
-        // resize(value1, value2);
         ui->embedwidget->setFixedSize(value1, value2);
         adjustSize();
         setFixedSize(width(), height());
-        // ui->embedwidget->setFixedSize(value1, value2);
-        // ui->embedwidget->resizeView(value1, value2);
-        // adjustSize();
         break;
     default:
         break;
@@ -163,4 +193,30 @@ const char* ChibiWindow::fileCallback(const FileCallbackOpcode action, const boo
 
     static QByteArray sRet = ret.toUtf8();
     return sRet;
+}
+
+void ChibiWindow::actionMute() {
+    if (isMute) {
+        carla_set_volume(handle, 0, 1);
+        isMute = false;
+    } else {
+        carla_set_volume(handle, 0, 0);
+        isMute = true;
+    }
+}
+void ChibiWindow::actionBypass() {
+    if (isBypass) {
+        carla_set_drywet(handle, 0, 1);
+        isBypass = false;
+    } else {
+        carla_set_drywet(handle, 0, 0);
+        isBypass = true;
+    }
+}
+
+void ChibiWindow::restore() {
+    this->show();
+    this->setWindowState( (windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+    this->raise();  // for MacOS
+    this->activateWindow(); // for Windows
 }

@@ -5,10 +5,18 @@ CONFIG += c++11 link_pkgconfig
 DEFINES += QT_DEPRECATED_WARNINGS
 
 PKGCONFIG += carla-standalone carla-utils
-
+DEPENDPATH += $$PWD/src
+INCLUDEPATH += $$PWD/src
 # FIXME for x11 systems only
 QT += x11extras
 PKGCONFIG += x11
+VPATH = src/
+
+DESTDIR = release
+OBJECTS_DIR = release/.obj
+MOC_DIR = release/.moc
+RCC_DIR = release/.rcc
+UI_DIR = release/.ui
 
 SOURCES += \
     chibiembedwidget.cpp \

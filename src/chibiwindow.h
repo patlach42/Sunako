@@ -1,6 +1,7 @@
 /*
- * Chibi - Carla's mini-host plugin loader
- * Copyright (C) 2020 Filipe Coelho <falktx@falktx.com>
+ * Sunako, fork of Chibi - Carla's mini-host plugin loader
+ * Copyright (Chibi, Carla) (C) 2020 Filipe Coelho <falktx@falktx.com>
+ * Copyright (Sunako) (C) 2022 Maxim Fedotov <f42.dobro@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with
  * or without fee is hereby granted, provided that the above copyright notice and this
@@ -18,6 +19,7 @@
 #define CHIBIWINDOW_H
 
 #include <QMainWindow>
+#include <QSystemTrayIcon>
 
 #include "CarlaHost.h"
 
@@ -38,9 +40,23 @@ public:
                 int64_t uniqueId);
     ~ChibiWindow();
 
+    QSystemTrayIcon *trayIcon;
+    QMenu *trayMenu;
+    QAction *tray_Action_Bypass;
+    QAction *tray_Action_Mute;
+    QAction *tray_Action_Restore;
+    QAction *tray_Action_Quit;
+    bool isBypass = false;
+    bool isMute = false;
+
 protected:
     void closeEvent(QCloseEvent* event) override;
     void timerEvent(QTimerEvent* event) override;
+
+private slots:
+    void actionMute();
+    void actionBypass();
+    void restore();
 
 private:
     Ui::ChibiWindow* const ui;
