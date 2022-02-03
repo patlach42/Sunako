@@ -1,5 +1,17 @@
 # mini-host plugin loader
 
+What is Sunako?
+---------------
+Name is referenced to Sunako Nakahara.
+Sunako is fork of Chibi - so it's still mini host, but this mini-host is can hide to tray. You can access some carla 
+options for plugin from tray context menu.
+
+Usage:
+```
+./Sunako -n <title_and_jack_client_name> -m -i <png_icon_path> <path_to_VST2_plugin>
+```
+
+
 What is Chibi?
 ---------------
 
