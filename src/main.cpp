@@ -49,12 +49,16 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription("Sunako - single vst host.");
     parser.addHelpOption();
     QCommandLineOption iconOption(QString("i"),
-                                     QCoreApplication::translate("main", "Use <icon>.png as icon."),
-                                     QCoreApplication::translate("main", "icon"));
+                                  QCoreApplication::translate("main", "Use <icon.png> as icon."),
+                                  QCoreApplication::translate("main", "icon"));
+    QCommandLineOption nameOption(QString("n"),
+                                  QCoreApplication::translate("main", "Use <name> as title and client name."),
+                                  QCoreApplication::translate("main", "name"));
     QCommandLineOption minimizedOption(QString("m"),
                                   QCoreApplication::translate("main", "Start minimized to tray"));
 
     parser.addOption(iconOption);
+    parser.addOption(nameOption);
     parser.addOption(minimizedOption);
     parser.addPositionalArgument("plugin_path",
                                  QCoreApplication::translate("main", "Path to VST2 .so plugin."));
@@ -68,20 +72,23 @@ int main(int argc, char *argv[])
     }
     plugin_path = args.at(0);
 
-
-
-    ChibiWindow w(CarlaBackend::BINARY_NATIVE, CarlaBackend::PLUGIN_VST2, plugin_path, name, label, uniqueId);
     bool iconOptionSet = parser.isSet(iconOption);
     bool minimizedOptionSet = parser.isSet(minimizedOption);
+    bool nameOptionSet = parser.isSet(nameOption);
+    if (nameOptionSet) {
+        name = parser.value(nameOption);
+    } else {
+        name = "Title";
+    }
+
+    ChibiWindow w(CarlaBackend::BINARY_NATIVE, CarlaBackend::PLUGIN_VST2, plugin_path, name, label, uniqueId);
 
     if (iconOptionSet) {
         QString iconOptionValue = parser.value(iconOption);
         QIcon icon(iconOptionValue);
         w.trayIcon->setIcon(icon);
         w.setWindowIcon(icon);
-    } else {
     }
-
     if (!minimizedOptionSet) {
         w.show();
     }

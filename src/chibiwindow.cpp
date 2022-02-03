@@ -24,7 +24,8 @@
 #include <QMenu>
 #include <QAction>
 #include <QObject>
-
+#include <QApplication>
+#include <QStyle>
 #include "src/carla/CarlaUtils.hpp"
 
 ChibiWindow::ChibiWindow(BinaryType btype,
@@ -40,7 +41,7 @@ ChibiWindow::ChibiWindow(BinaryType btype,
 {
     ui->setupUi(this);
 
-    const QString properName = QString("Sunako");
+    const QString properName = QString(name);
     this->setWindowTitle(properName);
 
     // Tray behaviour
@@ -49,7 +50,9 @@ ChibiWindow::ChibiWindow(BinaryType btype,
     tray_Action_Quit = new QAction(QString("Quit"), this);
     tray_Action_Restore = new QAction(QString("Show"), this);
     tray_Action_Mute = new QAction(QString("Mute"), this);
+    tray_Action_Mute -> setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogCancelButton));
     tray_Action_Bypass = new QAction(QString("Bypass"), this);
+    tray_Action_Bypass -> setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogCancelButton));
     trayIcon -> setVisible(true);
     trayMenu -> addAction(tray_Action_Bypass);
     trayMenu -> addAction(tray_Action_Mute);
@@ -199,18 +202,22 @@ void ChibiWindow::actionMute() {
     if (isMute) {
         carla_set_volume(handle, 0, 1);
         isMute = false;
+        tray_Action_Mute -> setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogCancelButton));
     } else {
         carla_set_volume(handle, 0, 0);
         isMute = true;
+        tray_Action_Mute -> setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogApplyButton));
     }
 }
 void ChibiWindow::actionBypass() {
     if (isBypass) {
         carla_set_drywet(handle, 0, 1);
         isBypass = false;
+        tray_Action_Bypass -> setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogCancelButton));
     } else {
         carla_set_drywet(handle, 0, 0);
         isBypass = true;
+        tray_Action_Bypass -> setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogApplyButton));
     }
 }
 
