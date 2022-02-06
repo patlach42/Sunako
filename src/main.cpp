@@ -15,83 +15,37 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "chibiwindow.h"
+#include "SunakoSettings.h"
+#include "SunakoCli.h"
+#include "ChibiWindow.h"
 
 #include <QApplication>
 #include <QSettings>
 #include <QCommandLineParser>
 
 #include <QMenu>
-#include <QSystemTrayIcon>
-#include <QIcon>
-
-#include <cstdlib>
 
 #include "CarlaUtils.h"
-#include "src/carla/CarlaUtils.hpp"
 
 int main(int argc, char *argv[])
 {
-    int64_t uniqueId = 1337;
-
     QCoreApplication::setApplicationName(QString("Sunako"));
 
-    // Disable Qt Scaling size behaviour
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling, false);
     QCoreApplication::setAttribute(Qt::AA_DisableHighDpiScaling, true);
 
     QApplication app(argc, argv);
 
-    QString plugin_path;
-    QString name;
-    QString label;
-    QCommandLineParser parser;
-    parser.setApplicationDescription("Sunako - single vst host.");
-    parser.addHelpOption();
-    QCommandLineOption iconOption(QString("i"),
-                                  QCoreApplication::translate("main", "Use <icon.png> as icon."),
-                                  QCoreApplication::translate("main", "icon"));
-    QCommandLineOption nameOption(QString("n"),
-                                  QCoreApplication::translate("main", "Use <name> as title and client name."),
-                                  QCoreApplication::translate("main", "name"));
-    QCommandLineOption minimizedOption(QString("m"),
-                                  QCoreApplication::translate("main", "Start minimized to tray"));
-
-    parser.addOption(iconOption);
-    parser.addOption(nameOption);
-    parser.addOption(minimizedOption);
-    parser.addPositionalArgument("plugin_path",
-                                 QCoreApplication::translate("main", "Path to VST2 .so plugin."));
-
-    // Process the actual command line arguments given by the user
-    parser.process(app);
-
-    const QStringList args = parser.positionalArguments();
-    if (args.empty()) {
-        parser.showHelp(0);
+    auto *sunakoSettings = new SunakoSettings();
+    SunakoCli sunakoCli(sunakoSettings);
+    sunakoCli.process(app);
+    if (sunakoSettings -> getPluginPath().isEmpty()) {
+        sunakoCli.showHelp();
+        exit(0);
     }
-    plugin_path = args.at(0);
+    sunakoSettings -> printSettings();
 
-    bool iconOptionSet = parser.isSet(iconOption);
-    bool minimizedOptionSet = parser.isSet(minimizedOption);
-    bool nameOptionSet = parser.isSet(nameOption);
-    if (nameOptionSet) {
-        name = parser.value(nameOption);
-    } else {
-        name = "Title";
-    }
-
-    ChibiWindow w(CarlaBackend::BINARY_NATIVE, CarlaBackend::PLUGIN_VST2, plugin_path, name, label, uniqueId);
-
-    if (iconOptionSet) {
-        QString iconOptionValue = parser.value(iconOption);
-        QIcon icon(iconOptionValue);
-        w.trayIcon->setIcon(icon);
-        w.setWindowIcon(icon);
-    }
-    if (!minimizedOptionSet) {
-        w.show();
-    }
+    ChibiWindow w(sunakoSettings);
 
     return app.exec();
 }

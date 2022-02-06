@@ -4,7 +4,7 @@ CONFIG += c++11 link_pkgconfig
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
-PKGCONFIG += carla-standalone carla-utils
+PKGCONFIG += carla-standalone carla-utils jack
 DEPENDPATH += $$PWD/src
 INCLUDEPATH += $$PWD/src
 # FIXME for x11 systems only
@@ -19,13 +19,17 @@ RCC_DIR = release/.rcc
 UI_DIR = release/.ui
 
 SOURCES += \
-    chibiembedwidget.cpp \
+    SunakoSettings.cpp \
+    SunakoCli.cpp \
+    ChibiEmbedWidget.cpp \
     main.cpp \
-    chibiwindow.cpp
+    ChibiWindow.cpp
 
 HEADERS += \
-    chibiembedwidget.h \
-    chibiwindow.h
+    SunakoSettings.h \
+    SunakoCli.h \
+    ChibiEmbedWidget.h \
+    ChibiWindow.h
 
 FORMS += \
     resources/chibiwindow.ui

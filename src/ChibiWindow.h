@@ -18,10 +18,13 @@
 #ifndef CHIBIWINDOW_H
 #define CHIBIWINDOW_H
 
+#include "jack/jack.h"
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 
 #include "CarlaHost.h"
+#include "CarlaEngine.hpp"
+#include <SunakoSettings.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class ChibiWindow; }
@@ -32,12 +35,7 @@ class ChibiWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    ChibiWindow(CarlaBackend::BinaryType btype,
-                CarlaBackend::PluginType ptype,
-                const QString& filename,
-                const QString& name,
-                const QString& label,
-                int64_t uniqueId);
+    ChibiWindow(SunakoSettings* sunakoSettings);
     ~ChibiWindow();
 
     QSystemTrayIcon *trayIcon;

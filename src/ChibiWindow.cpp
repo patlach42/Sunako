@@ -14,8 +14,9 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "chibiwindow.h"
+#include "ChibiWindow.h"
 #include "ui_chibiwindow.h"
+#include "CarlaEngine.hpp"
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -27,13 +28,9 @@
 #include <QApplication>
 #include <QStyle>
 #include "src/carla/CarlaUtils.hpp"
+#include <SunakoSettings.h>
 
-ChibiWindow::ChibiWindow(BinaryType btype,
-                         PluginType ptype,
-                         const QString& filename,
-                         const QString& name,
-                         const QString& label,
-                         int64_t uniqueId)
+ChibiWindow::ChibiWindow(SunakoSettings *sunakoSettings)
     : QMainWindow(nullptr)
     , ui(new Ui::ChibiWindow)
     , handle(carla_standalone_host_init())
@@ -41,11 +38,22 @@ ChibiWindow::ChibiWindow(BinaryType btype,
 {
     ui->setupUi(this);
 
-    const QString properName = QString(name);
+    auto btype = sunakoSettings -> getBinaryType();
+    auto ptype = sunakoSettings -> getPluginType();
+    auto label = sunakoSettings -> getName();
+    auto uniqueId = 0;
+    auto pluginPath = sunakoSettings -> getPluginPath();
+    const QString properName = QString(label);
     this->setWindowTitle(properName);
 
     // Tray behaviour
     trayIcon = new QSystemTrayIcon(this->windowIcon(),this);
+    if (!sunakoSettings -> getIcon().isEmpty()) {
+        QIcon icon(sunakoSettings -> getIcon());
+        trayIcon->setIcon(icon);
+        setWindowIcon(icon);
+    }
+
     trayMenu = new QMenu(this);
     tray_Action_Quit = new QAction(QString("Quit"), this);
     tray_Action_Restore = new QAction(QString("Show"), this);
@@ -64,7 +72,6 @@ ChibiWindow::ChibiWindow(BinaryType btype,
     connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(restore()));
     connect(tray_Action_Mute, SIGNAL(triggered()), this, SLOT(actionMute()));
     connect(tray_Action_Bypass, SIGNAL(triggered()), this, SLOT(actionBypass()));
-
     carla_set_engine_option(handle, CarlaBackend::ENGINE_OPTION_OSC_ENABLED, 0, nullptr);
 
     {
@@ -97,13 +104,12 @@ ChibiWindow::ChibiWindow(BinaryType btype,
     CARLA_SAFE_ASSERT_RETURN(carla_engine_init(handle, "JACK", "Chibi"),);
 
     if (! carla_add_plugin(handle, btype, ptype, 
-                           filename.toUtf8(), properName.toUtf8(), label.toUtf8(),
+                           pluginPath.toUtf8(), properName.toUtf8(), label.toUtf8(),
                            uniqueId, nullptr, 0x0))
     {
         carla_stderr2("Failed to add plugin, error was: %s", carla_get_last_error(handle));
         return;
     }
-
 
     void* const ptr = carla_embed_custom_ui(handle, 0, (void*)(intptr_t)ui->embedwidget->winId());
     ui->embedwidget->setup(ptr);
@@ -112,6 +118,9 @@ ChibiWindow::ChibiWindow(BinaryType btype,
         resize(ui->embedwidget->size());
     else
         adjustSize();
+    if (!sunakoSettings -> getMinimizeToTray()) {
+        this -> show();
+    }
 }
 
 ChibiWindow::~ChibiWindow()

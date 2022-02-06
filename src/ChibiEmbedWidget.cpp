@@ -1,4 +1,4 @@
-#include "chibiembedwidget.h"
+#include "ChibiEmbedWidget.h"
 
 #include <QResizeEvent>
 
